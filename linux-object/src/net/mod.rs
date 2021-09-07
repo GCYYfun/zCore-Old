@@ -25,24 +25,16 @@ pub use icmp::*;
 
 // ============= Socket Set =============
 
-use smoltcp::socket::SocketSet;
-
-//lazy
-use lazy_static::lazy_static;
-
-// spin
+use kernel_hal::get_net_sockets;
 use spin::Mutex;
-
-use alloc::vec;
-
-lazy_static! {
-    /// Global SocketSet in smoltcp.
-    ///
-    /// Because smoltcp is a single thread network stack,
-    /// every socket operation needs to lock this.
-    pub static ref SOCKETS: Mutex<SocketSet<'static>> =
-        Mutex::new(SocketSet::new(vec![]));
-}
+// lazy_static! {
+//     /// Global SocketSet in smoltcp.
+//     ///
+//     /// Because smoltcp is a single thread network stack,
+//     /// every socket operation needs to lock this.
+//     pub static ref SOCKETS: Mutex<SocketSet<'static>> =
+//         Mutex::new(SocketSet::new(vec![]));
+// }
 
 // ============= Socket Set =============
 
@@ -102,14 +94,15 @@ struct GlobalSocketHandle(SocketHandle);
 
 impl Clone for GlobalSocketHandle {
     fn clone(&self) -> Self {
-        SOCKETS.lock().retain(self.0);
+        get_net_sockets().lock().retain(self.0);
         Self(self.0)
     }
 }
 
 impl Drop for GlobalSocketHandle {
     fn drop(&mut self) {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         sockets.release(self.0);
         sockets.prune();
 
@@ -129,7 +122,7 @@ use kernel_hal::get_net_driver;
 #[cfg(feature = "e1000")]
 fn poll_ifaces_e1000() {
     for iface in get_net_driver().iter() {
-        iface.poll(&(*SOCKETS));
+        iface.poll(&(*get_net_sockets()));
     }
 }
 
@@ -152,7 +145,7 @@ pub fn get_net_stack() -> HashMap<usize, Arc<dyn NetStack>> {
 fn poll_ifaces_loopback() {
     for (_key, stack) in get_net_stack().iter() {
         let timestamp = Instant::from_millis(timer_now().as_millis() as i64);
-        stack.poll(&(*SOCKETS), timestamp);
+        stack.poll(&(*get_net_sockets()), timestamp);
     }
 }
 

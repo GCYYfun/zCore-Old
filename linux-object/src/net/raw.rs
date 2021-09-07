@@ -4,6 +4,7 @@
 use crate::error::LxError;
 use crate::error::LxResult;
 use crate::net::get_net_driver;
+use crate::net::get_net_sockets;
 use crate::net::Endpoint;
 use crate::net::GlobalSocketHandle;
 use crate::net::IpAddress;
@@ -15,10 +16,8 @@ use crate::net::IP_HDRINCL;
 use crate::net::RAW_METADATA_BUF;
 use crate::net::RAW_RECVBUF;
 use crate::net::RAW_SENDBUF;
-use crate::net::SOCKETS;
 use alloc::sync::Arc;
 use spin::Mutex;
-
 // alloc
 use alloc::boxed::Box;
 use alloc::vec;
@@ -67,7 +66,7 @@ impl RawSocketState {
             rx_buffer,
             tx_buffer,
         );
-        let handle = GlobalSocketHandle(SOCKETS.lock().add(socket));
+        let handle = GlobalSocketHandle(get_net_sockets().lock().add(socket));
 
         RawSocketState {
             base: KObjectBase::new(),
@@ -79,7 +78,8 @@ impl RawSocketState {
     /// missing documentation
     pub async fn read(&self, data: &mut [u8]) -> (LxResult<usize>, Endpoint) {
         loop {
-            let mut sockets = SOCKETS.lock();
+            let net_sockets = get_net_sockets();
+            let mut sockets = net_sockets.lock();
             let mut socket = sockets.get::<RawSocket>(self.handle.0);
 
             if let Ok(size) = socket.recv_slice(data) {
@@ -101,7 +101,8 @@ impl RawSocketState {
     /// missing documentation
     pub fn write(&self, data: &[u8], sendto_endpoint: Option<Endpoint>) -> LxResult<usize> {
         if self.header_included {
-            let mut sockets = SOCKETS.lock();
+            let net_sockets = get_net_sockets();
+            let mut sockets = net_sockets.lock();
             let mut socket = sockets.get::<RawSocket>(self.handle.0);
 
             match socket.send_slice(data) {
@@ -112,7 +113,8 @@ impl RawSocketState {
             // temporary solution
             let iface = &*(get_net_driver()[0]);
             let v4_src = iface.ipv4_address().unwrap();
-            let mut sockets = SOCKETS.lock();
+            let net_sockets = get_net_sockets();
+            let mut sockets = net_sockets.lock();
             let mut socket = sockets.get::<RawSocket>(self.handle.0);
 
             if let IpAddress::Ipv4(v4_dst) = endpoint.addr {
@@ -135,7 +137,7 @@ impl RawSocketState {
                 // avoid deadlock
                 drop(socket);
                 drop(sockets);
-                iface.poll(&(*SOCKETS));
+                iface.poll(&(*get_net_sockets()));
 
                 Ok(len)
             } else {

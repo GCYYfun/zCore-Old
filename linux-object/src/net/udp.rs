@@ -6,6 +6,7 @@ use crate::error::LxResult;
 use crate::net::from_cstr;
 use crate::net::get_ephemeral_port;
 use crate::net::get_net_driver;
+use crate::net::get_net_sockets;
 #[cfg(feature = "e1000")]
 use crate::net::poll_ifaces_e1000;
 #[cfg(feature = "loopback")]
@@ -21,7 +22,6 @@ use crate::net::SockAddr;
 use crate::net::SockAddrPlaceholder;
 use crate::net::Socket;
 use crate::net::SysResult;
-use crate::net::SOCKETS;
 use crate::net::UDP_METADATA_BUF;
 use crate::net::UDP_RECVBUF;
 use crate::net::UDP_SENDBUF;
@@ -73,7 +73,7 @@ impl UdpSocketState {
             vec![0; UDP_SENDBUF],
         );
         let socket = UdpSocket::new(rx_buffer, tx_buffer);
-        let handle = GlobalSocketHandle(SOCKETS.lock().add(socket));
+        let handle = GlobalSocketHandle(get_net_sockets().lock().add(socket));
 
         UdpSocketState {
             base: KObjectBase::new(),
@@ -93,7 +93,8 @@ impl UdpSocketState {
             poll_ifaces_e1000();
             #[cfg(feature = "loopback")]
             poll_ifaces_loopback();
-            let mut sockets = SOCKETS.lock();
+            let net_sockets = get_net_sockets();
+            let mut sockets = net_sockets.lock();
             let mut socket = sockets.get::<UdpSocket>(self.handle.0);
 
             if socket.can_recv() {
@@ -131,7 +132,8 @@ impl UdpSocketState {
             }
         };
 
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let mut socket = sockets.get::<UdpSocket>(self.handle.0);
 
         if socket.endpoint().port == 0 {
@@ -163,7 +165,8 @@ impl UdpSocketState {
 
     /// missing documentation
     pub fn poll(&self) -> (bool, bool, bool) {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let socket = sockets.get::<UdpSocket>(self.handle.0);
 
         let (mut input, mut output, err) = (false, false, false);
@@ -187,7 +190,8 @@ impl UdpSocketState {
     }
 
     fn bind(&mut self, endpoint: Endpoint) -> SysResult {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let mut socket = sockets.get::<UdpSocket>(self.handle.0);
         #[allow(irrefutable_let_patterns)]
         if let Endpoint::Ip(mut ip) = endpoint {
@@ -244,7 +248,8 @@ impl UdpSocketState {
     }
 
     fn endpoint(&self) -> Option<Endpoint> {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let socket = sockets.get::<UdpSocket>(self.handle.0);
         let endpoint = socket.endpoint();
         if endpoint.port != 0 {

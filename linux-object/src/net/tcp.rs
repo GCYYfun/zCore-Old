@@ -4,6 +4,7 @@
 use crate::error::LxError;
 use crate::error::LxResult;
 use crate::net::get_ephemeral_port;
+use crate::net::get_net_sockets;
 #[cfg(feature = "e1000")]
 use crate::net::poll_ifaces_e1000;
 #[cfg(feature = "loopback")]
@@ -13,7 +14,6 @@ use crate::net::GlobalSocketHandle;
 use crate::net::IpEndpoint;
 use crate::net::Socket;
 use crate::net::SysResult;
-use crate::net::SOCKETS;
 use crate::net::TCP_RECVBUF;
 use crate::net::TCP_SENDBUF;
 use alloc::sync::Arc;
@@ -59,7 +59,7 @@ impl TcpSocketState {
         let rx_buffer = TcpSocketBuffer::new(vec![0; TCP_RECVBUF]);
         let tx_buffer = TcpSocketBuffer::new(vec![0; TCP_SENDBUF]);
         let socket = TcpSocket::new(rx_buffer, tx_buffer);
-        let handle = GlobalSocketHandle(SOCKETS.lock().add(socket));
+        let handle = GlobalSocketHandle(get_net_sockets().lock().add(socket));
 
         TcpSocketState {
             base: KObjectBase::new(),
@@ -76,7 +76,8 @@ impl TcpSocketState {
             poll_ifaces_e1000();
             #[cfg(feature = "loopback")]
             poll_ifaces_loopback();
-            let mut sockets = SOCKETS.lock();
+            let net_sockets = get_net_sockets();
+            let mut sockets = net_sockets.lock();
             let mut socket = sockets.get::<TcpSocket>(self.handle.0);
             if socket.may_recv() {
                 if let Ok(size) = socket.recv_slice(data) {
@@ -104,7 +105,8 @@ impl TcpSocketState {
 
     /// missing documentation
     pub fn write(&self, data: &[u8], _sendto_endpoint: Option<Endpoint>) -> SysResult {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let mut socket = sockets.get::<TcpSocket>(self.handle.0);
         if socket.is_open() {
             if socket.can_send() {
@@ -132,7 +134,8 @@ impl TcpSocketState {
 
     /// missing documentation
     fn poll(&self) -> (bool, bool, bool) {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let socket = sockets.get::<TcpSocket>(self.handle.0);
 
         let (mut input, mut output, mut err) = (false, false, false);
@@ -154,7 +157,8 @@ impl TcpSocketState {
 
     /// missing documentation
     pub async fn connect(&self, endpoint: Endpoint) -> SysResult {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let mut socket = sockets.get::<TcpSocket>(self.handle.0);
         #[allow(warnings)]
         if let Endpoint::Ip(ip) = endpoint {
@@ -172,7 +176,8 @@ impl TcpSocketState {
                 poll_ifaces_e1000();
                 #[cfg(feature = "loopback")]
                 poll_ifaces_loopback();
-                let mut sockets = SOCKETS.lock();
+                let net_sockets = get_net_sockets();
+                let mut sockets = net_sockets.lock();
                 let socket = sockets.get::<TcpSocket>(self.handle.0);
                 match socket.state() {
                     TcpState::SynSent => {
@@ -221,7 +226,8 @@ impl TcpSocketState {
             return Ok(0);
         }
         let local_endpoint = self.local_endpoint.ok_or(LxError::EINVAL)?;
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let mut socket = sockets.get::<TcpSocket>(self.handle.0);
 
         info!("socket listening on {:?}", local_endpoint);
@@ -239,7 +245,8 @@ impl TcpSocketState {
 
     /// missing documentation
     fn shutdown(&self) -> SysResult {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let mut socket = sockets.get::<TcpSocket>(self.handle.0);
         socket.close();
         Ok(0)
@@ -253,12 +260,15 @@ impl TcpSocketState {
             poll_ifaces_e1000();
             #[cfg(feature = "loopback")]
             poll_ifaces_loopback();
-            let mut sockets = SOCKETS.lock();
+            let net_sockets = get_net_sockets();
+            let mut sockets = net_sockets.lock();
             let socket = sockets.get::<TcpSocket>(self.handle.0);
             if socket.is_active() {
                 let remote_endpoint = socket.remote_endpoint();
                 drop(socket);
                 let new_socket = {
+                    let net_sockets = get_net_sockets();
+                    let mut sockets = net_sockets.lock();
                     let rx_buffer = TcpSocketBuffer::new(vec![0; TCP_RECVBUF]);
                     let tx_buffer = TcpSocketBuffer::new(vec![0; TCP_SENDBUF]);
                     let mut socket = TcpSocket::new(rx_buffer, tx_buffer);
@@ -287,7 +297,8 @@ impl TcpSocketState {
     /// missing documentation
     fn endpoint(&self) -> Option<Endpoint> {
         self.local_endpoint.map(Endpoint::Ip).or_else(|| {
-            let mut sockets = SOCKETS.lock();
+            let net_sockets = get_net_sockets();
+            let mut sockets = net_sockets.lock();
             let socket = sockets.get::<TcpSocket>(self.handle.0);
             let endpoint = socket.local_endpoint();
             if endpoint.port != 0 {
@@ -300,7 +311,8 @@ impl TcpSocketState {
 
     /// missing documentation
     fn remote_endpoint(&self) -> Option<Endpoint> {
-        let mut sockets = SOCKETS.lock();
+        let net_sockets = get_net_sockets();
+        let mut sockets = net_sockets.lock();
         let socket = sockets.get::<TcpSocket>(self.handle.0);
         if socket.is_open() {
             Some(Endpoint::Ip(socket.remote_endpoint()))

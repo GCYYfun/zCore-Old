@@ -246,16 +246,18 @@ async fn handle_syscall(thread: &CurrentThread, cx: &mut UserContext) {
 }
 
 // #[allow(dead_code)]
+// #[allow(unused_imports)]
 // fn super_mode_net_test() {
-//     use smoltcp::socket::UdpPacketMetadata;
-//     use smoltcp::socket::UdpSocket;
-//     use smoltcp::socket::UdpSocketBuffer;
-//     use smoltcp::time::Instant;
 //     use core::str::from_utf8;
 //     use kernel_hal::devices::get_net_driver;
 //     use kernel_hal::timer_now;
 //     use kernel_hal_bare::devices::net::e1000::E1000Interface;
 //     use smoltcp::socket::SocketSet;
+//     use smoltcp::socket::UdpPacketMetadata;
+//     use smoltcp::socket::UdpSocket;
+//     use smoltcp::socket::UdpSocketBuffer;
+//     use smoltcp::time::Instant;
+//     use spin::Mutex;
 
 //     // udp s
 //     let udp_rx_buffer = UdpSocketBuffer::new(vec![UdpPacketMetadata::EMPTY], vec![0; 64]);
@@ -265,54 +267,52 @@ async fn handle_syscall(thread: &CurrentThread, cx: &mut UserContext) {
 
 //     use alloc::vec;
 //     // use alloc::vec::Vec;
-//     let mut sockets = SocketSet::new(vec![]);
-//     let udp_handle = sockets.add(udp_socket);
+//     let mut sockets = Mutex::new(SocketSet::new(vec![]));
+//     let udp_handle = sockets.lock().add(udp_socket);
 
 //     let e1000 = get_net_driver()[0].clone();
-//         // let local = NET_DRIVERS.read()[0].clone();
 
-//     if let Ok(_li) = e1000.downcast_arc::<E1000Interface>() {
-//             // use std::os::unix::io::AsRawFd;
-//             // let fd = li.iface.lock().device().as_raw_fd();
-//             // let mut sockets = SOCKETS.lock();
-//         loop {
-//             // let _timestamp = Instant::now();
-//             let timestamp = Instant::from_millis(timer_now().as_millis() as i64);
-//             match _li.iface.lock().poll(&mut sockets, timestamp) {
-//                 Ok(_a) => {
-//                     // warn!("poll ok: {}", a);
-//                 }
-//                 Err(e) => {
-//                     warn!("poll error: {}", e);
-//                 }
+//     // if let Ok(_li) = e1000.downcast_arc::<E1000Interface>() {
+//     loop {
+//         // let _timestamp = Instant::now();      .iface.lock()
+//         // let timestamp = Instant::from_millis(timer_now().as_millis() as i64);
+//         // match _li.try_handle_interrupt(57,&mut sockets/*, timestamp*/) {
+//         //     Ok(_a) => {
+//         //         warn!("poll ok: {}", _a);
+//         //     }
+//         //     Err(e) => {
+//         //         warn!("poll error: {}", e);
+//         //     }
+//         // }
+//         e1000.try_handle_interrupt(Some(58), &mut sockets);
+//         {
+//             // udp bind
+//             let mut x = sockets.lock();
+//             let mut socket = x.get::<UdpSocket>(udp_handle);
+//             if !socket.is_open() {
+//                 warn!("bind 6969");
+//                 socket.bind(6969).unwrap()
 //             }
-//             {
-//                 // udp bind
-//                 let mut socket = sockets.get::<UdpSocket>(udp_handle);
-//                 if !socket.is_open() {
-//                     warn!("bind 6969");
-//                     socket.bind(6969).unwrap()
+//             // udp recv
+//             let client = match socket.recv() {
+//                 Ok((data, endpoint)) => {
+//                     warn!(" udp recv : {} form {}", from_utf8(data).unwrap(), endpoint);
+//                     Some(endpoint)
 //                 }
-//                  // udp recv
-//                 let client = match socket.recv() {
-//                     Ok((data, endpoint)) => {
-//                         warn!(" udp recv : {} form {}", from_utf8(data).unwrap(), endpoint);
-//                         Some(endpoint)
-//                     }
-//                     Err(_) => None,
-//                 };
-//                 // udp send
-//                 if let Some(endpoint) = client {
-//                     let data = b"cargo test OK";
-//                     warn!(
-//                         "udp:6969 send data: {:?}",
-//                         from_utf8(data.as_ref()).unwrap()
-//                     );
-//                     socket.send_slice(data, endpoint).unwrap();
-//                 }
+//                 Err(_) => None,
+//             };
+//             // udp send
+//             if let Some(endpoint) = client {
+//                 let data = b"cargo test OK";
+//                 warn!(
+//                     "udp:6969 send data: {:?}",
+//                     from_utf8(data.as_ref()).unwrap()
+//                 );
+//                 socket.send_slice(data, endpoint).unwrap();
+//                 warn!("send done");
 //             }
 //         }
 //     }
-//     todo!();
-
+//     // }
+//     // todo!();
 // }

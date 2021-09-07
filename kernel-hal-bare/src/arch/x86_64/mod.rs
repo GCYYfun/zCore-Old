@@ -27,6 +27,8 @@ mod interrupt;
 mod keyboard;
 mod rand;
 
+pub use interrupt::IRQ_TABLE;
+
 /// Page Table
 #[repr(C)]
 pub struct PageTableImpl {

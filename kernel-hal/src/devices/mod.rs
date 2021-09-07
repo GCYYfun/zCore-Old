@@ -8,10 +8,6 @@ pub use net::*;
 use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-// smoltcp
-use smoltcp::socket::SocketSet;
-// spin
-use spin::Mutex;
 // downcast
 use downcast_rs::DowncastSync;
 
@@ -27,12 +23,6 @@ pub enum DeviceType {
 }
 
 pub trait Driver: DowncastSync + Send + Sync {
-    // if interrupt belongs to this driver, handle it and return true
-    // return false otherwise
-    // irq number is provided when available
-    // driver should skip handling when irq number is mismatched
-    fn try_handle_interrupt(&self, irq: Option<usize>, socketset: &Mutex<SocketSet>) -> bool;
-
     // return the correspondent device type, see DeviceType
     fn device_type(&self) -> DeviceType;
 

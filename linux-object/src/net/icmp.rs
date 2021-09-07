@@ -1,6 +1,7 @@
 // icmpsocket
 #![allow(dead_code)]
 // crate
+use crate::net::get_net_sockets;
 use crate::net::Endpoint;
 use crate::net::GlobalSocketHandle;
 use crate::net::IpAddress;
@@ -10,7 +11,6 @@ use crate::net::SysResult;
 use crate::net::ICMP_METADATA_BUF;
 use crate::net::ICMP_RECVBUF;
 use crate::net::ICMP_SENDBUF;
-use crate::net::SOCKETS;
 use alloc::sync::Arc;
 use spin::Mutex;
 
@@ -57,7 +57,7 @@ impl IcmpSocketState {
             vec![0; ICMP_SENDBUF],
         );
         let socket = IcmpSocket::new(rx_buffer, tx_buffer);
-        let handle = GlobalSocketHandle(SOCKETS.lock().add(socket));
+        let handle = GlobalSocketHandle(get_net_sockets().lock().add(socket));
 
         IcmpSocketState {
             base: KObjectBase::new(),

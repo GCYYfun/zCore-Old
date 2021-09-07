@@ -25,8 +25,11 @@ use isomorphic_drivers::net::ethernet::intel::e1000::E1000;
 use isomorphic_drivers::net::ethernet::structs::EthernetAddress as DriverEthernetAddress;
 
 // ctate
+use super::SOCKETS;
 use crate::arch::timer_now;
+use crate::arch::IRQ_TABLE;
 use crate::devices::NET_DRIVERS;
+use crate::Box;
 use crate::PAGE_SIZE;
 use kernel_hal::{DeviceType, Driver, NetDriver};
 
@@ -74,6 +77,20 @@ pub struct E1000Interface {
 }
 
 impl Driver for E1000Interface {
+    fn device_type(&self) -> DeviceType {
+        DeviceType::Net
+    }
+
+    fn get_id(&self) -> String {
+        String::from("e1000")
+    }
+
+    fn as_net(&self) -> Option<&dyn NetDriver> {
+        Some(self)
+    }
+}
+
+impl NetDriver for E1000Interface {
     fn try_handle_interrupt(&self, irq: Option<usize>, socketset: &Mutex<SocketSet>) -> bool {
         if irq.is_some() && self.irq.is_some() && irq != self.irq {
             // not ours, skip it
@@ -81,7 +98,7 @@ impl Driver for E1000Interface {
         }
 
         let data = self.driver.0.lock().handle_interrupt();
-
+        // warn!("{}",data);
         if data {
             let timestamp = Instant::from_millis(timer_now().as_millis() as i64);
             let mut sockets = socketset.lock();
@@ -97,20 +114,6 @@ impl Driver for E1000Interface {
         return data;
     }
 
-    fn device_type(&self) -> DeviceType {
-        DeviceType::Net
-    }
-
-    fn get_id(&self) -> String {
-        String::from("e1000")
-    }
-
-    fn as_net(&self) -> Option<&dyn NetDriver> {
-        Some(self)
-    }
-}
-
-impl NetDriver for E1000Interface {
     fn get_mac(&self) -> EthernetAddress {
         self.iface.lock().ethernet_addr()
     }
@@ -232,17 +235,22 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
         irq,
     };
 
-    // #[cfg(target_arch = "x86_64")]
-    // use crate::arch::x86_64::interrupt::irq_add_handle;
-    // irq_add_handle(57,e1000_iface.try_handle_interrupt());
     let driver = Arc::new(e1000_iface);
     NET_DRIVERS.write().push(driver);
+    IRQ_TABLE.lock().insert(57, Some(Box::new(irq57test)));
+}
+
+fn irq57test() {
+    warn!("irq57");
+    for iface in NET_DRIVERS.read().clone().iter() {
+        iface.try_handle_interrupt(Some(57), &(*SOCKETS));
+    }
 }
 
 // provider
 
 use crate::drivers::virtio::virtio::virtio_dma_alloc;
-use crate::drivers::virtio::virtio::virtio_dma_dealloc;
+// use crate::drivers::virtio::virtio::virtio_dma_dealloc;
 #[allow(unused_imports)]
 use crate::{
     hal_frame_alloc_contiguous as frame_alloc_contiguous, hal_frame_dealloc as frame_dealloc,

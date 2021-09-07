@@ -3,12 +3,20 @@ pub use e1000::*;
 
 pub use super::*;
 use alloc::string::String;
+use alloc::sync::Arc;
 use alloc::vec::Vec;
 use smoltcp::phy::DeviceCapabilities;
 use smoltcp::socket::SocketSet;
 use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv4Address};
+use spin::Mutex;
 
 pub trait NetDriver: Driver {
+    // if interrupt belongs to this driver, handle it and return true
+    // return false otherwise
+    // irq number is provided when available
+    // driver should skip handling when irq number is mismatched
+    fn try_handle_interrupt(&self, irq: Option<usize>, socketset: &Mutex<SocketSet>) -> bool;
+
     // get mac address for this device
     fn get_mac(&self) -> EthernetAddress {
         unimplemented!("not a net driver")
@@ -50,3 +58,9 @@ pub trait NetDriver: Driver {
 }
 use downcast_rs::impl_downcast;
 impl_downcast!(sync NetDriver);
+
+#[linkage = "weak"]
+#[export_name = "hal_get_net_sockets"]
+pub fn get_net_sockets() -> Arc<Mutex<SocketSet<'static>>> {
+    unimplemented!()
+}
