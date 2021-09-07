@@ -1,5 +1,6 @@
 use super::*;
 use linux_object::net::sockaddr_to_endpoint;
+use linux_object::net::IcmpSocketState;
 use linux_object::net::RawSocketState;
 use linux_object::net::SockAddr;
 use linux_object::net::Socket;
@@ -33,23 +34,11 @@ impl Syscall<'_> {
                 1 => Arc::new(Mutex::new(TcpSocketState::new())),
                 2 => Arc::new(Mutex::new(UdpSocketState::new())),
                 3 => match protocol {
-                    // 1 => {
-                    //     warn!("yes Icmp socekt");
-                    //     Arc::new(IcmpSocketState::new())
-                    // Arc::new(UdpSocketState::new // Arc::new(UdpSocketState::new())())
-                    // }
+                    1 => Arc::new(Mutex::new(IcmpSocketState::new())),
                     _ => Arc::new(Mutex::new(RawSocketState::new(protocol as u8))),
                 },
                 _ => return Err(LxError::EINVAL),
             },
-            //     AddressFamily::Packet => match socket_type {
-            //         SocketType::Raw => Box::new(PacketSocketState::new()),
-            //         _ => return Err(SysError::EINVAL),
-            //     },
-            //     AddressFamily::Netlink => match socket_type {
-            //         SocketType::Raw => Box::new(NetlinkSocketState::new()),
-            //         _ => return Err(SysError::EINVAL),
-            //     },
             _ => return Err(LxError::EAFNOSUPPORT),
         };
         // socket
@@ -76,21 +65,6 @@ impl Syscall<'_> {
         let socket = _proc.get_socket(fd.into())?;
         let x = socket.lock();
         x.connect(endpoint).await?;
-        // match file.file_type()? {
-        //     FileLikeType::RawSocket => {
-        //         unreachable!()
-        //     }
-        //     FileLikeType::TcpSocket => {
-        //         let socket = file
-        //             .downcast_arc::<TcpSocketState>()
-        //             .map_err(|_| LxError::EBADF)?;
-        //         socket.connect(endpoint)?;
-        //     }
-        //     FileLikeType::UdpSocket => {
-        //         unreachable!()
-        //     }
-        //     _ => unreachable!(),
-        // };
         Ok(0)
     }
 
@@ -140,29 +114,6 @@ impl Syscall<'_> {
         // 有问题 FIXME
         let socket = proc.get_socket(sockfd.into())?;
         let len = socket.lock().write(&data, endpoint)?;
-        // let len = match file.file_type()? {
-        //     FileLikeType::RawSocket => {
-        //         let socket = file
-        //             .downcast_arc::<RawSocketState>()
-        //             .map_err(|_| LxError::EBADF)?;
-        //         socket.raw_write(&data, endpoint)?
-        //     }
-        //     FileLikeType::TcpSocket => {
-        //         let socket = file
-        //             .downcast_arc::<TcpSocketState>()
-        //             .map_err(|_| LxError::EBADF)?;
-        //         socket.tcp_write(&data, endpoint)?
-        //     }
-        //     FileLikeType::UdpSocket => {
-        //         // let socket = file
-        //         //     .downcast_arc::<UdpSocketState>()
-        //         //     .map_err(|_| LxError::EBADF)?;
-        //         // socket.udp_write(&data, endpoint)?
-        //         0
-        //     }
-        //     _ => unreachable!(),
-        // };
-        // warn!("len : {}", len);
         Ok(len)
     }
 
@@ -188,10 +139,7 @@ impl Syscall<'_> {
         let (result, endpoint) = x.read(&mut data).await;
         if result.is_ok() && !addr.is_null() {
             let sockaddr_in = SockAddr::from(endpoint);
-            // #[allow(unsafe_code)]
-            //unsafe {
             sockaddr_in.write_to(addr, addr_len)?;
-            //}
         }
         buffer.write_array(&data[..length])?;
         result
