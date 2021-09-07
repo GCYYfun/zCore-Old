@@ -3,11 +3,6 @@
 // crate
 use crate::error::LxError;
 use crate::error::LxResult;
-use crate::net::Socket;
-use crate::net::SysResult;
-use spin::Mutex;
-// use crate::fs::FileLike;
-// use crate::fs::FileLikeType;
 use crate::net::from_cstr;
 use crate::net::get_ephemeral_port;
 use crate::net::get_net_driver;
@@ -24,10 +19,13 @@ use crate::net::IpEndpoint;
 use crate::net::Ipv4Address;
 use crate::net::SockAddr;
 use crate::net::SockAddrPlaceholder;
+use crate::net::Socket;
+use crate::net::SysResult;
 use crate::net::SOCKETS;
 use crate::net::UDP_METADATA_BUF;
 use crate::net::UDP_RECVBUF;
 use crate::net::UDP_SENDBUF;
+use spin::Mutex;
 
 // alloc
 use alloc::boxed::Box;
@@ -44,7 +42,6 @@ use smoltcp::socket::UdpSocketBuffer;
 use async_trait::async_trait;
 
 // third part
-// use rcore_fs::vfs::PollStatus;
 use zircon_object::impl_kobject;
 use zircon_object::object::*;
 
@@ -269,22 +266,18 @@ impl Socket for UdpSocketState {
     /// read to buffer
     async fn read(&self, data: &mut [u8]) -> (SysResult, Endpoint) {
         self.read(data).await
-        // unimplemented!()
     }
     /// write from buffer
     fn write(&self, data: &[u8], sendto_endpoint: Option<Endpoint>) -> SysResult {
         self.write(data, sendto_endpoint)
-        // unimplemented!()
     }
     /// connect
     async fn connect(&self, endpoint: Endpoint) -> SysResult {
         self.connect(endpoint).await
-        // unimplemented!()
     }
     /// wait for some event on a file descriptor
     fn poll(&self) -> (bool, bool, bool) {
         self.poll()
-        // unimplemented!()
     }
 
     fn bind(&mut self, endpoint: Endpoint) -> SysResult {
@@ -302,13 +295,11 @@ impl Socket for UdpSocketState {
     }
     fn endpoint(&self) -> Option<Endpoint> {
         self.endpoint()
-        // None
     }
     fn remote_endpoint(&self) -> Option<Endpoint> {
         self.remote_endpoint()
-        // None
     }
-    fn setsockopt(&self, _level: usize, _opt: usize, _data: &[u8]) -> SysResult {
+    fn setsockopt(&mut self, _level: usize, _opt: usize, _data: &[u8]) -> SysResult {
         warn!("setsockopt is unimplemented");
         Ok(0)
     }
@@ -317,7 +308,6 @@ impl Socket for UdpSocketState {
     fn ioctl(&self, request: usize, arg1: usize, arg2: usize, arg3: usize) -> SysResult {
         warn!("ioctl is unimplemented for this socket");
         self.ioctl(request, arg1, arg2, arg3)
-        // Ok(0)
     }
 
     fn fcntl(&self, _cmd: usize, _arg: usize) -> SysResult {

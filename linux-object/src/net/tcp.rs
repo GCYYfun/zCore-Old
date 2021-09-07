@@ -33,7 +33,6 @@ use smoltcp::socket::TcpState;
 use async_trait::async_trait;
 
 // third part
-// use rcore_fs::vfs::PollStatus;
 use zircon_object::object::*;
 
 /// missing documentation
@@ -321,56 +320,44 @@ impl Socket for TcpSocketState {
     /// read to buffer
     async fn read(&self, data: &mut [u8]) -> (SysResult, Endpoint) {
         self.read(data).await
-        // unimplemented!()
     }
     /// write from buffer
     fn write(&self, _data: &[u8], _sendto_endpoint: Option<Endpoint>) -> SysResult {
         self.write(_data, _sendto_endpoint)
-        // unimplemented!()
     }
     /// connect
     async fn connect(&self, _endpoint: Endpoint) -> SysResult {
         self.connect(_endpoint).await
-        // unimplemented!()
     }
     /// wait for some event on a file descriptor
     fn poll(&self) -> (bool, bool, bool) {
         self.poll()
-        // unimplemented!()
     }
 
     fn bind(&mut self, endpoint: Endpoint) -> SysResult {
         self.bind(endpoint)
-        // Err(LxError::EINVAL)
     }
     fn listen(&mut self) -> SysResult {
         self.listen()
-        // Err(LxError::EINVAL)
     }
     fn shutdown(&self) -> SysResult {
         self.shutdown()
-        // Err(LxError::EINVAL)
     }
     async fn accept(&mut self) -> LxResult<(Arc<Mutex<dyn Socket>>, Endpoint)> {
         self.accept().await
-        // Err(LxError::EINVAL)
     }
     fn endpoint(&self) -> Option<Endpoint> {
         self.endpoint()
-        // None
     }
     fn remote_endpoint(&self) -> Option<Endpoint> {
         self.remote_endpoint()
-        // None
     }
-    fn setsockopt(&self, _level: usize, _opt: usize, _data: &[u8]) -> SysResult {
-        warn!("setsockopt is unimplemented");
+    fn setsockopt(&mut self, _level: usize, _opt: usize, _data: &[u8]) -> SysResult {
         Ok(0)
     }
 
     /// manipulate file descriptor
     fn ioctl(&self, _request: usize, _arg1: usize, _arg2: usize, _arg3: usize) -> SysResult {
-        warn!("ioctl is unimplemented for this socket");
         Ok(0)
     }
 

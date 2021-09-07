@@ -1,20 +1,15 @@
 use super::*;
+use linux_object::net::sockaddr_to_endpoint;
+use linux_object::net::RawSocketState;
+use linux_object::net::SockAddr;
 use linux_object::net::Socket;
+use linux_object::net::TcpSocketState;
 use linux_object::net::UdpSocketState;
 use spin::Mutex;
-// use linux_object::fs::FileLike;
-// use linux_object::fs::FileLikeType;
-use linux_object::net::sockaddr_to_endpoint;
-// use linux_object::net::RawSocketState;
-use linux_object::net::SockAddr;
-use linux_object::net::TcpSocketState;
-// use linux_object::net::UdpSocketState;
 
 impl Syscall<'_> {
     /// net socket
     pub fn sys_socket(&mut self, domain: usize, socket_type: usize, protocol: usize) -> SysResult {
-        // let domain = AddressFamily::from(domain as u16);
-        // let socket_type = SocketType::from(socket_type as u8 & SOCK_TYPE_MASK);
         info!(
             "sys_socket: domain: {:?}, socket_type: {:?}, protocol: {}",
             domain, socket_type, protocol
@@ -35,24 +30,15 @@ impl Syscall<'_> {
                 //              5 SEQPACKET
                 //              6 DCCP
                 //              10 SOCK_PACKET
-                1 => {
-                    Arc::new(Mutex::new(TcpSocketState::new()))
-                    // Arc::new(UdpSocketState::new())
-                }
-                2 => {
-                    Arc::new(Mutex::new(UdpSocketState::new()))
-                    // Arc::new(UdpSocketState::new())
-                }
+                1 => Arc::new(Mutex::new(TcpSocketState::new())),
+                2 => Arc::new(Mutex::new(UdpSocketState::new())),
                 3 => match protocol {
                     // 1 => {
                     //     warn!("yes Icmp socekt");
                     //     Arc::new(IcmpSocketState::new())
-                    // Arc::new(UdpSocketState::new())
+                    // Arc::new(UdpSocketState::new // Arc::new(UdpSocketState::new())())
                     // }
-                    _ => {
-                        // Arc::new(RawSocketState::new(protocol as u8))
-                        Arc::new(Mutex::new(UdpSocketState::new()))
-                    }
+                    _ => Arc::new(Mutex::new(RawSocketState::new(protocol as u8))),
                 },
                 _ => return Err(LxError::EINVAL),
             },

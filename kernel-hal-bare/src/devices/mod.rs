@@ -18,7 +18,8 @@ use kernel_hal::NetDriver;
 lazy_static! {
     pub static ref DRIVERS: RwLock<Vec<Arc<dyn Driver>>> = RwLock::new(Vec::new());
     pub static ref NET_DRIVERS: RwLock<Vec<Arc<dyn NetDriver>>> = RwLock::new(Vec::new());
-    pub static ref PCI_DRIVERS: RwLock<BTreeMap<Location, Arc<dyn Driver>>> =RwLock::new(BTreeMap::new());
+    pub static ref PCI_DRIVERS: RwLock<BTreeMap<Location, Arc<dyn Driver>>> =
+        RwLock::new(BTreeMap::new());
 }
 
 pub fn devices_init() {

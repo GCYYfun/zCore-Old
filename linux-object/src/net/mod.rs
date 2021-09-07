@@ -17,9 +17,9 @@ pub use udp::*;
 pub mod raw;
 pub use raw::*;
 
-// /// missing documentation
-// pub mod icmp;
-// pub use icmp::*;
+/// missing documentation
+pub mod icmp;
+pub use icmp::*;
 
 // pub mod stack;
 
@@ -290,7 +290,7 @@ pub trait Socket: Send + Sync + Debug {
         None
     }
     /// missing documentation
-    fn setsockopt(&self, _level: usize, _opt: usize, _data: &[u8]) -> SysResult {
+    fn setsockopt(&mut self, _level: usize, _opt: usize, _data: &[u8]) -> SysResult {
         warn!("setsockopt is unimplemented");
         Ok(0)
     }

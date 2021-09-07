@@ -1,35 +1,34 @@
-// icmpsocket 
+// icmpsocket
 #![allow(dead_code)]
 // crate
-use crate::net::IpAddress;
-use smoltcp::socket::IcmpEndpoint;
 use crate::net::Endpoint;
-use crate::net::SOCKETS;
 use crate::net::GlobalSocketHandle;
-use crate::net::ICMP_SENDBUF;
-use crate::net::ICMP_RECVBUF;
+use crate::net::IpAddress;
+use crate::net::LxResult;
+use crate::net::Socket;
+use crate::net::SysResult;
 use crate::net::ICMP_METADATA_BUF;
-// use crate::net::poll_ifaces;
-use crate::error::LxResult;
-// use crate::error::LxError;
-use crate::fs::FileLike;
+use crate::net::ICMP_RECVBUF;
+use crate::net::ICMP_SENDBUF;
+use crate::net::SOCKETS;
+use alloc::sync::Arc;
+use spin::Mutex;
 
 // alloc
-use alloc::vec;
 use alloc::boxed::Box;
+use alloc::vec;
 
 // smoltcp
 
+use smoltcp::socket::IcmpPacketMetadata;
 use smoltcp::socket::IcmpSocket;
 use smoltcp::socket::IcmpSocketBuffer;
-use smoltcp::socket::IcmpPacketMetadata;
 
 // async
 use async_trait::async_trait;
 
-// third part 
+// third part
 use zircon_object::impl_kobject;
-use rcore_fs::vfs::PollStatus;
 use zircon_object::object::*;
 
 /// missing documentation
@@ -40,6 +39,11 @@ pub struct IcmpSocketState {
     handle: GlobalSocketHandle,
 }
 
+impl Default for IcmpSocketState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl IcmpSocketState {
     /// missing documentation
@@ -62,29 +66,11 @@ impl IcmpSocketState {
     }
 
     /// missing documentation
-    pub fn icmp_read(&self,data:&mut [u8]) -> LxResult<usize> {
-        // loop {
-        //     let mut sockets = SOCKETS.lock();
-        //     let mut socket = sockets.get::<IcmpSocket>(self.handle.0);
-
-        //     if socket.can_recv() {
-        //         if let Ok((size, _)) = socket.recv_slice(data) {
-        //             // let endpoint = remote_endpoint;
-        //             // avoid deadlock
-        //             drop(socket);
-        //             drop(sockets);
-
-        //             poll_ifaces_e1000();
-        //             return Ok(size);
-        //         }
-        //     } else {
-        //         return Err(LxError::ENOTCONN);
-        //     }
-        // }
+    pub async fn read(&self, _data: &mut [u8]) -> SysResult {
         unimplemented!()
     }
 
-    fn icmp_write(&self,data:&[u8],remote_addr: IpAddress) -> LxResult<usize> {
+    fn write(&self, _data: &[u8], _remote_addr: IpAddress) -> SysResult {
         unimplemented!()
     }
 
@@ -92,21 +78,15 @@ impl IcmpSocketState {
         unimplemented!()
     }
 
-    fn connect(&mut self, endpoint: Endpoint) -> LxResult<usize> {
+    fn connect(&mut self, _endpoint: Endpoint) -> SysResult {
         unimplemented!()
     }
 
-    fn bind(&mut self, _endpoint: Endpoint) -> LxResult<usize> {
-        let mut sockets = SOCKETS.lock();
-        let mut socket = sockets.get::<IcmpSocket>(self.handle.0);
-        if !socket.is_open() {
-            socket.bind(IcmpEndpoint::Ident(0x1234)).unwrap();
-            // send_at = timestamp;
-        }
+    fn bind(&mut self, _endpoint: Endpoint) -> SysResult {
         unimplemented!()
     }
 
-    fn ioctl(&mut self, request: usize, arg1: usize, _arg2: usize, _arg3: usize) -> LxResult<usize> {
+    fn ioctl(&mut self, _request: usize, _arg1: usize, _arg2: usize, _arg3: usize) -> SysResult {
         unimplemented!()
     }
 
@@ -120,41 +100,64 @@ impl IcmpSocketState {
 }
 impl_kobject!(IcmpSocketState);
 
-
-
-
 #[async_trait]
-impl FileLike for IcmpSocketState {
+impl Socket for IcmpSocketState {
     /// read to buffer
-    async fn read(&self, _buf: &mut [u8]) -> LxResult<usize> {
+    async fn read(&self, _data: &mut [u8]) -> (SysResult, Endpoint) {
         unimplemented!()
+        // self.read(data).await
     }
     /// write from buffer
-    fn write(&self, _buf: &[u8]) -> LxResult<usize> {
+    fn write(&self, _data: &[u8], _sendto_endpoint: Option<Endpoint>) -> SysResult {
         unimplemented!()
+        // self.write(data, sendto_endpoint)
     }
-    /// read to buffer at given offset
-    async fn read_at(&self, _offset: u64, _buf: &mut [u8]) -> LxResult<usize> {
+    /// connect
+    async fn connect(&self, _endpoint: Endpoint) -> SysResult {
         unimplemented!()
-    }
-    /// write from buffer at given offset
-    fn write_at(&self, _offset: u64, _buf: &[u8]) -> LxResult<usize> {
-        unimplemented!()
+        // self.connect(_endpoint).await
     }
     /// wait for some event on a file descriptor
-    fn poll(&self) -> LxResult<PollStatus> {
+    fn poll(&self) -> (bool, bool, bool) {
         unimplemented!()
+        // self.poll()
     }
-    /// wait for some event on a file descriptor use async
-    async fn async_poll(&self) -> LxResult<PollStatus> {
+
+    fn bind(&mut self, _endpoint: Endpoint) -> SysResult {
         unimplemented!()
+        // self.bind(endpoint)
     }
-    /// manipulates the underlying device parameters of special files
-    fn ioctl(&self, _request: usize, _arg1: usize, _arg2: usize, _arg3: usize) -> LxResult<usize> {
+    fn listen(&mut self) -> SysResult {
         unimplemented!()
+        // self.listen()
     }
+    fn shutdown(&self) -> SysResult {
+        unimplemented!()
+        // self.shutdown()
+    }
+    async fn accept(&mut self) -> LxResult<(Arc<Mutex<dyn Socket>>, Endpoint)> {
+        unimplemented!()
+        // self.accept().await
+    }
+    fn endpoint(&self) -> Option<Endpoint> {
+        unimplemented!()
+        // self.endpoint()
+    }
+    fn remote_endpoint(&self) -> Option<Endpoint> {
+        unimplemented!()
+        // self.remote_endpoint()
+    }
+    fn setsockopt(&mut self, _level: usize, _opt: usize, _data: &[u8]) -> SysResult {
+        unimplemented!()
+        // self.setsockopt(level, opt, data)
+    }
+
     /// manipulate file descriptor
-    fn fcntl(&self, _cmd: usize, _arg: usize) -> LxResult<usize> {
-        unimplemented!()
+    fn ioctl(&self, _request: usize, _arg1: usize, _arg2: usize, _arg3: usize) -> SysResult {
+        Ok(0)
+    }
+
+    fn fcntl(&self, _cmd: usize, _arg: usize) -> SysResult {
+        Ok(0)
     }
 }
