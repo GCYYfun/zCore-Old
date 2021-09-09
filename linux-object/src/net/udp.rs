@@ -7,6 +7,7 @@ use crate::net::from_cstr;
 use crate::net::get_ephemeral_port;
 use crate::net::get_net_driver;
 use crate::net::get_net_sockets;
+#[allow(unused_imports)]
 #[cfg(feature = "e1000")]
 use crate::net::poll_ifaces_e1000;
 #[cfg(feature = "loopback")]

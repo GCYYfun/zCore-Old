@@ -267,8 +267,6 @@ impl TcpSocketState {
                 let remote_endpoint = socket.remote_endpoint();
                 drop(socket);
                 let new_socket = {
-                    let net_sockets = get_net_sockets();
-                    let mut sockets = net_sockets.lock();
                     let rx_buffer = TcpSocketBuffer::new(vec![0; TCP_RECVBUF]);
                     let tx_buffer = TcpSocketBuffer::new(vec![0; TCP_SENDBUF]);
                     let mut socket = TcpSocket::new(rx_buffer, tx_buffer);
@@ -291,6 +289,7 @@ impl TcpSocketState {
             }
 
             drop(socket);
+            drop(sockets);
         }
     }
 

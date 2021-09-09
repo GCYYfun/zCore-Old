@@ -98,7 +98,7 @@ impl Syscall<'_> {
         dest_addr: UserInPtr<SockAddr>,
         addrlen: usize,
     ) -> SysResult {
-        info!(
+        warn!(
             "sys_sendto : sockfd : {:?}, buffer : {:?}, length : {:?}, flags : {:?} , optlen : {:?}, addrlen : {:?}",
             sockfd,buffer,length,flags,dest_addr,addrlen
         );
@@ -187,7 +187,7 @@ impl Syscall<'_> {
         addr: UserOutPtr<SockAddr>,
         addr_len: UserInOutPtr<u32>,
     ) -> SysResult {
-        info!(
+        warn!(
             "sys_accept: fd={:?} addr={:?} addr_len={:?}",
             fd, addr, addr_len
         );
@@ -197,7 +197,6 @@ impl Syscall<'_> {
 
         let socket = proc.get_socket(fd.into())?;
         let (new_socket, remote_endpoint) = socket.lock().accept().await?;
-
         let new_fd = proc.add_socket(new_socket)?;
 
         if !addr.is_null() {

@@ -23,11 +23,9 @@ use {
 };
 
 mod acpi_table;
-mod interrupt;
+pub mod interrupt;
 mod keyboard;
 mod rand;
-
-pub use interrupt::IRQ_TABLE;
 
 /// Page Table
 #[repr(C)]

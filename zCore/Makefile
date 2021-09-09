@@ -70,7 +70,7 @@ qemu_opts += \
 	-serial mon:stdio \
 	-m 4G \
 	-netdev type=user,id=net0,hostfwd=udp::6969-:6969,hostfwd=tcp::9999-:9999 \
-	-device e1000,netdev=net0,mac=52:54:98:76:54:32 \
+	-device e1000e,netdev=net0,mac=52:54:98:76:54:32 \
 	-device isa-debug-exit,iobase=0xf4,iosize=0x04 
 
 baremetal-test-qemu_opts += \
@@ -82,7 +82,7 @@ baremetal-test-qemu_opts += \
 	-serial mon:stdio \
 	-m 4G \
 	-netdev type=user,id=net0,hostfwd=udp::6969-:6969,hostfwd=tcp::9999-:9999 \
-	-device e1000,netdev=net0,mac=52:54:98:76:54:32 \
+	-device e1000e,netdev=net0,mac=52:54:98:76:54:32 \
 	-device isa-debug-exit,iobase=0xf4,iosize=0x04
 
 else ifeq ($(arch), riscv64)

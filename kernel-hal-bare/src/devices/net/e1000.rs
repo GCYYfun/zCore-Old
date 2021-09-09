@@ -27,7 +27,6 @@ use isomorphic_drivers::net::ethernet::structs::EthernetAddress as DriverEtherne
 // ctate
 use super::SOCKETS;
 use crate::arch::timer_now;
-use crate::arch::IRQ_TABLE;
 use crate::devices::NET_DRIVERS;
 use crate::Box;
 use crate::PAGE_SIZE;
@@ -92,6 +91,7 @@ impl Driver for E1000Interface {
 
 impl NetDriver for E1000Interface {
     fn try_handle_interrupt(&self, irq: Option<usize>, socketset: &Mutex<SocketSet>) -> bool {
+        warn!("handle interrupt");
         if irq.is_some() && self.irq.is_some() && irq != self.irq {
             // not ours, skip it
             return false;
@@ -104,7 +104,7 @@ impl NetDriver for E1000Interface {
             let mut sockets = socketset.lock();
             match self.iface.lock().poll(&mut sockets, timestamp) {
                 Ok(_) => {
-                    warn!("now in impl Driver for E1000Interface try_handle_interrupt need SOCKET_ACTIVITY.notify_all()");
+                    warn!("interrupt iface poll");
                 }
                 Err(err) => {
                     debug!("poll got err {}", err);
@@ -201,7 +201,7 @@ impl phy::TxToken for E1000TxToken {
 
 #[export_name = "hal_net_e1000_init"]
 pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index: usize) {
-    warn!("Probing e1000 {}", name);
+    warn!("Probing e1000 {}, interrupt : {:?}", name,irq);
 
     // randomly generated
     let mac: [u8; 6] = [0x52, 0x54, 0x98, 0x76, 0x54, 0x33];
@@ -237,13 +237,14 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
 
     let driver = Arc::new(e1000_iface);
     NET_DRIVERS.write().push(driver);
-    IRQ_TABLE.lock().insert(57, Some(Box::new(irq57test)));
+    use crate::arch::interrupt::IRQ_TABLE;
+    IRQ_TABLE.lock().insert(57, Some(Box::new(net_interrupt_test)));
 }
 
-fn irq57test() {
-    warn!("irq57");
+fn net_interrupt_test() {
+    warn!("net_interrupt");
     for iface in NET_DRIVERS.read().clone().iter() {
-        iface.try_handle_interrupt(Some(57), &(*SOCKETS));
+        iface.try_handle_interrupt(Some(25), &(*SOCKETS));
     }
 }
 

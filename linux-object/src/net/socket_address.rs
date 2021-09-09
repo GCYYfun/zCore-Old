@@ -153,7 +153,6 @@ pub fn sockaddr_to_endpoint(addr: SockAddr, len: usize) -> Result<Endpoint, LxEr
         match AddressFamily::from(addr.family) {
             AddressFamily::Internet => {
                 let port = u16::from_be(addr.addr_in.sin_port);
-                warn!("port : {:?}", port);
                 let addr = IpAddress::from(Ipv4Address::from_bytes(
                     &u32::from_be(addr.addr_in.sin_addr).to_be_bytes()[..],
                 ));
