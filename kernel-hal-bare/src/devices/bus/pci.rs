@@ -171,7 +171,7 @@ unsafe fn enable(loc: Location) -> Option<usize> {
         debug!("MSI not found, using PCI interrupt");
     }
 
-    warn!("pci device enable done");
+    info!("pci device enable done");
 
     assigned_irq
 }
