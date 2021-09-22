@@ -137,7 +137,7 @@ impl RawSocketState {
                 // avoid deadlock
                 drop(socket);
                 drop(sockets);
-                iface.poll(&(*get_net_sockets()));
+                if let Ok(_) = iface.poll(&(*get_net_sockets())) {};
 
                 Ok(len)
             } else {

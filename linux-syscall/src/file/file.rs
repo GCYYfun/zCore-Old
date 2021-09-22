@@ -27,7 +27,7 @@ impl Syscall<'_> {
             let socket = proc.get_socket(x.into())?;
             let mut buf = vec![0u8; len];
             let (len, _) = socket.lock().read(&mut buf).await;
-            let len = len.unwrap();
+            let len = len.unwrap_or(0);
             base.write_array(&buf[..len])?;
             Ok(len)
         } else {

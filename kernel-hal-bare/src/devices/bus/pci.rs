@@ -79,7 +79,7 @@ pub fn init_driver(dev: &PCIDevice) {
                 let vaddr = phys_to_virt(addr as usize);
                 let index = NET_DRIVERS.read().len();
                 #[cfg(feature = "e1000")]
-                warn!("e1000 init and irq : {:?}",irq);
+                warn!("e1000 init and irq : {:?}", irq);
                 #[cfg(feature = "e1000")]
                 e1000::init(name, irq, vaddr, len as usize, index);
                 return;

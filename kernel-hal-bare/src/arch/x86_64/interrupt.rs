@@ -56,10 +56,21 @@ pub fn init() {
     irq_add_handle(Keyboard + IRQ0, Box::new(keyboard));
     irq_add_handle(Mouse + IRQ0, Box::new(mouse));
     irq_add_handle(COM1 + IRQ0, Box::new(com1));
+    // irq_add_handle(Net + IRQ0, Box::new(net_interrupt_test));
     irq_enable_raw(Keyboard, Keyboard + IRQ0);
     irq_enable_raw(Mouse, Mouse + IRQ0);
     irq_enable_raw(COM1, COM1 + IRQ0);
+    // irq_enable_raw(Net, Net + IRQ0);
 }
+
+// use crate::devices::NET_DRIVERS;
+// use crate::devices::SOCKETS;
+// fn net_interrupt_test() {
+//     warn!("net_interrupt");
+//     for iface in NET_DRIVERS.read().clone().iter() {
+//         iface.try_handle_interrupt(Some(25), &(*SOCKETS));
+//     }
+// }
 
 fn init_irq_table() {
     let mut table = IRQ_TABLE.lock();
@@ -79,6 +90,7 @@ unsafe fn init_ioapic() {
 }
 
 fn get_ioapic(irq: u32) -> Option<acpi::interrupt::IoApic> {
+    info!("get_ioapic irq={:#x?} ", irq);
     for i in AcpiTable::get_ioapic() {
         let num_instr = core::cmp::min(
             ioapic_maxinstr(i.address).unwrap(),
@@ -90,6 +102,7 @@ fn get_ioapic(irq: u32) -> Option<acpi::interrupt::IoApic> {
             return Some(i);
         }
     }
+    info!("get_ioapic irq={:#x?} ", irq);
     None
 }
 
@@ -100,6 +113,9 @@ fn ioapic_controller(i: &acpi::interrupt::IoApic) -> IoApic {
 #[no_mangle]
 pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
     trace!("Interrupt: {:#x} @ CPU{}", tf.trap_num, 0); // TODO 0 should replace in multi-core case
+                                                        // if tf.trap_num != 32 {
+                                                        //     error!("trap handler irq : {}", tf.trap_num);
+                                                        // }
     match tf.trap_num as u8 {
         Breakpoint => breakpoint(),
         DoubleFault => double_fault(tf),
@@ -123,15 +139,19 @@ pub fn irq_handle(irq: u8) {
 
 #[export_name = "hal_irq_register_handler"]
 pub fn register_irq_handler(global_irq: u32, handle: InterruptHandle) -> Option<u32> {
-    info!("set_handle irq={:#x?}", global_irq);
+    error!("set_handle irq={:#x?}  1", global_irq);
     // if global_irq == 1 {
     //     irq_add_handle(global_irq as u8 + IRQ0, handle);
     //     return Some(global_irq as u8 + IRQ0);
     // }
     let ioapic_info = get_ioapic(global_irq)?;
+    error!("set_handle irq={:#x?}  2", global_irq);
     let mut ioapic = ioapic_controller(&ioapic_info);
+    error!("set_handle irq={:#x?}  3", global_irq);
     let offset = (global_irq - ioapic_info.global_system_interrupt_base) as u8;
+    error!("set_handle irq={:#x?}  4", global_irq);
     let irq = ioapic.irq_vector(offset);
+    error!("set_handle irq={:#x?}  5", global_irq);
     let new_handle = if global_irq == 0x1 {
         Box::new(move || {
             handle();
@@ -141,14 +161,17 @@ pub fn register_irq_handler(global_irq: u32, handle: InterruptHandle) -> Option<
     } else {
         handle
     };
-    irq_add_handle(irq, new_handle).map(|x| {
+    error!("set_handle irq={:#x?}  6", global_irq);
+    let xx = irq_add_handle(irq, new_handle).map(|x| {
         info!(
             "irq_set_handle: mapping from {:#x?} to {:#x?}",
             global_irq, x
         );
         ioapic.set_irq_vector(offset, x);
         x as u32
-    })
+    });
+    error!("set_handle irq={:#x?}  7", global_irq);
+    xx
 }
 
 #[export_name = "hal_irq_unregister_handler"]
@@ -410,4 +433,5 @@ const COM1: u8 = 4;
 const Mouse: u8 = 12;
 const IDE: u8 = 14;
 const Error: u8 = 19;
+const Net: u8 = 25;
 const Spurious: u8 = 31;

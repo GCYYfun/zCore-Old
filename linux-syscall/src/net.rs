@@ -111,7 +111,6 @@ impl Syscall<'_> {
             let endpoint = sockaddr_to_endpoint(dest_addr.read()?, addrlen)?;
             Some(endpoint)
         };
-        // 有问题 FIXME
         let socket = proc.get_socket(sockfd.into())?;
         let len = socket.lock().write(&data, endpoint)?;
         Ok(len)
@@ -133,7 +132,6 @@ impl Syscall<'_> {
         );
         let proc = self.linux_process();
         let mut data = vec![0u8; length];
-        // 有问题 FIXME
         let socket = proc.get_socket(sockfd.into())?;
         let x = socket.lock();
         let (result, endpoint) = x.read(&mut data).await;

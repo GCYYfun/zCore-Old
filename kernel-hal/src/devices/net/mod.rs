@@ -8,6 +8,7 @@ use alloc::vec::Vec;
 use smoltcp::phy::DeviceCapabilities;
 use smoltcp::socket::SocketSet;
 use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv4Address};
+use smoltcp::Result;
 use spin::Mutex;
 
 pub trait NetDriver: Driver {
@@ -38,7 +39,7 @@ pub trait NetDriver: Driver {
     }
 
     // manually trigger a poll, use it after sending packets
-    fn poll(&self, _socketset: &Mutex<SocketSet>) {
+    fn poll(&self, _socketset: &Mutex<SocketSet>) -> Result<bool> {
         unimplemented!("not a net driver")
     }
 

@@ -91,7 +91,7 @@ impl Driver for E1000Interface {
 
 impl NetDriver for E1000Interface {
     fn try_handle_interrupt(&self, irq: Option<usize>, socketset: &Mutex<SocketSet>) -> bool {
-        warn!("handle interrupt");
+        warn!("handle interrupt ================================================");
         if irq.is_some() && self.irq.is_some() && irq != self.irq {
             // not ours, skip it
             return false;
@@ -103,8 +103,8 @@ impl NetDriver for E1000Interface {
             let timestamp = Instant::from_millis(timer_now().as_millis() as i64);
             let mut sockets = socketset.lock();
             match self.iface.lock().poll(&mut sockets, timestamp) {
-                Ok(_) => {
-                    warn!("interrupt iface poll");
+                Ok(b) => {
+                    warn!("interrupt iface poll,result : {}", b);
                 }
                 Err(err) => {
                     debug!("poll got err {}", err);
@@ -131,15 +131,14 @@ impl NetDriver for E1000Interface {
         self.iface.lock().ipv4_address()
     }
 
-    fn poll(&self, socketset: &Mutex<SocketSet>) {
+    fn poll(&self, socketset: &Mutex<SocketSet>) -> Result<bool> {
         let timestamp = Instant::from_millis(timer_now().as_millis() as i64);
         let mut sockets = socketset.lock();
         match self.iface.lock().poll(&mut sockets, timestamp) {
-            Ok(_) => {
-                // warn!("now in impl NetDriver for E1000Interface poll need SOCKET_ACTIVITY.notify_all()");
-            }
+            Ok(b) => Ok(b),
             Err(err) => {
                 debug!("poll got err {}", err);
+                Err(err)
             }
         }
     }
@@ -201,11 +200,10 @@ impl phy::TxToken for E1000TxToken {
 
 #[export_name = "hal_net_e1000_init"]
 pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index: usize) {
-    warn!("Probing e1000 {}, interrupt : {:?}", name,irq);
+    warn!("Probing e1000 {}, interrupt : {:?}", name, irq);
 
     // randomly generated
-    let mac: [u8; 6] = [0x52, 0x54, 0x98, 0x76, 0x54, 0x33];
-    // 52:54:98:76:54:32
+    let mac: [u8; 6] = [0x52, 0x54, 0x00, 0x12, 0x34, 0x56];
 
     let e1000 = E1000::new(header, size, DriverEthernetAddress::from_bytes(&mac));
 
@@ -227,7 +225,6 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
         .neighbor_cache(neighbor_cache)
         .finalize();
 
-    warn!("e1000 interface {} up with addr 10.0.{}.2/24", name, index);
     let e1000_iface = E1000Interface {
         iface: Mutex::new(iface),
         driver: net_driver.clone(),
@@ -237,13 +234,17 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
 
     let driver = Arc::new(e1000_iface);
     NET_DRIVERS.write().push(driver);
+    // use crate::arch::interrupt::register_irq_handler;
+    // register_irq_handler(57,Box::new(net_interrupt_test));
     use crate::arch::interrupt::IRQ_TABLE;
-    IRQ_TABLE.lock().insert(57, Some(Box::new(net_interrupt_test)));
+    IRQ_TABLE
+        .lock()
+        .insert(57, Some(Box::new(net_interrupt_test)));
 }
 
 fn net_interrupt_test() {
-    warn!("net_interrupt");
     for iface in NET_DRIVERS.read().clone().iter() {
+        warn!("erver iface net_interrupt iface : {:?}", iface.get_ifname());
         iface.try_handle_interrupt(Some(25), &(*SOCKETS));
     }
 }
