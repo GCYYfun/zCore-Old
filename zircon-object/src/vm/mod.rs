@@ -5,8 +5,8 @@ mod vmar;
 mod vmo;
 
 pub use self::{stream::*, vmar::*, vmo::*};
-use super::{ZxError, ZxResult};
 use alloc::sync::Arc;
+use helper::error::{ZxError, ZxResult};
 pub use kernel_hal::{CachePolicy, MMUFlags};
 use lazy_static::*;
 

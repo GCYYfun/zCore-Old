@@ -12,7 +12,7 @@ extern crate alloc;
 extern crate log;
 
 // layer 0
-pub mod error;
+// pub mod error;
 
 // layer 1
 pub mod fs;

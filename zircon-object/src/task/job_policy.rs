@@ -1,5 +1,5 @@
-use crate::error::*;
 use crate::signal::Slack;
+use helper::error::*;
 
 /// Security and resource policies of a job.
 #[derive(Default, Copy, Clone)]

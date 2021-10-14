@@ -32,8 +32,10 @@ use {
     self::consts::SyscallType as Sys,
     alloc::sync::Arc,
     core::convert::TryFrom,
-    kernel_hal::{user::*, GeneralRegs},
-    linux_object::{error::*, fs::FileDesc, process::*},
+    // helper::error::*,
+    helper::user::*,
+    kernel_hal::GeneralRegs,
+    linux_object::{fs::FileDesc, process::*},
     zircon_object::{object::*, task::*, vm::VirtAddr},
 };
 

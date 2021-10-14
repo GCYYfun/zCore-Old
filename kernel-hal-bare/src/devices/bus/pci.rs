@@ -82,6 +82,7 @@ pub fn init_driver(dev: &PCIDevice) {
                 warn!("e1000 init and irq : {:?}", irq);
                 #[cfg(feature = "e1000")]
                 e1000::init(name, irq, vaddr, len as usize, index);
+                // net_stack::e1000_init(name, irq, vaddr, len as usize, index);
                 return;
             }
         }

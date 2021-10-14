@@ -18,11 +18,11 @@ pub use self::random::*;
 pub use self::stdio::*;
 pub use rcore_fs::vfs;
 
-use crate::error::*;
 use crate::process::LinuxProcess;
 use async_trait::async_trait;
 use core::convert::TryFrom;
 use downcast_rs::impl_downcast;
+use helper::error::*;
 use zircon_object::object::*;
 
 mod device;

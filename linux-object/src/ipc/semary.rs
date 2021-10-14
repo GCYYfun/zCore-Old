@@ -1,10 +1,10 @@
 //! Linux semaphore ipc
 use super::*;
-use crate::error::LxError;
 use crate::sync::Semaphore;
 use crate::time::*;
 use alloc::{collections::BTreeMap, sync::Arc, sync::Weak, vec::Vec};
 use core::ops::Index;
+use helper::error::LxError;
 use lazy_static::*;
 use spin::Mutex;
 use spin::RwLock;

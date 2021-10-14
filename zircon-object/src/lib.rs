@@ -21,7 +21,7 @@ extern crate std;
 
 pub mod debuglog;
 pub mod dev;
-mod error;
+// mod error;
 #[cfg(feature = "hypervisor")]
 pub mod hypervisor;
 pub mod ipc;
@@ -31,4 +31,4 @@ pub mod task;
 pub mod util;
 pub mod vm;
 
-pub use self::error::*;
+pub use helper::error::*;

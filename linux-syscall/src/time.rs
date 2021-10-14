@@ -2,9 +2,9 @@
 //! - clock_gettime
 //!
 use crate::Syscall;
-use kernel_hal::{user::UserInPtr, user::UserOutPtr};
-use linux_object::error::LxError;
-use linux_object::error::SysResult;
+use helper::error::LxError;
+use helper::error::SysResult;
+use helper::{user::UserInPtr, user::UserOutPtr};
 use linux_object::time::*;
 
 const USEC_PER_TICK: usize = 10000;

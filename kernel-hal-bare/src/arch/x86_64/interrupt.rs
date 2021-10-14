@@ -11,9 +11,17 @@ use trapframe::TrapFrame;
 
 const IO_APIC_NUM_REDIRECTIONS: u8 = 120;
 const TABLE_SIZE: usize = 256;
-pub type InterruptHandle = Box<dyn Fn() + Send + Sync>;
+use helper::interrupt::InterruptHandle;
+// pub type InterruptHandle = Box<dyn Fn() + Send + Sync>;
 lazy_static! {
     pub static ref IRQ_TABLE: Mutex<Vec<Option<InterruptHandle>>> = Default::default();
+}
+
+#[no_mangle]
+pub extern "C" fn irq_table_insert(irq: u32, handle: InterruptHandle){
+    IRQ_TABLE
+        .lock()
+        .insert((32+irq) as usize, Some(handle));
 }
 
 lazy_static! {
@@ -56,21 +64,10 @@ pub fn init() {
     irq_add_handle(Keyboard + IRQ0, Box::new(keyboard));
     irq_add_handle(Mouse + IRQ0, Box::new(mouse));
     irq_add_handle(COM1 + IRQ0, Box::new(com1));
-    // irq_add_handle(Net + IRQ0, Box::new(net_interrupt_test));
     irq_enable_raw(Keyboard, Keyboard + IRQ0);
     irq_enable_raw(Mouse, Mouse + IRQ0);
     irq_enable_raw(COM1, COM1 + IRQ0);
-    // irq_enable_raw(Net, Net + IRQ0);
 }
-
-// use crate::devices::NET_DRIVERS;
-// use crate::devices::SOCKETS;
-// fn net_interrupt_test() {
-//     warn!("net_interrupt");
-//     for iface in NET_DRIVERS.read().clone().iter() {
-//         iface.try_handle_interrupt(Some(25), &(*SOCKETS));
-//     }
-// }
 
 fn init_irq_table() {
     let mut table = IRQ_TABLE.lock();

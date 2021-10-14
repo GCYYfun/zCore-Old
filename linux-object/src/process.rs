@@ -1,10 +1,8 @@
 //! Linux Process
 
 // use smoltcp::socket::SocketRef;
-use crate::error::*;
 use crate::fs::*;
 use crate::ipc::*;
-use crate::net::Socket;
 use crate::signal::{Signal as LinuxSignal, SignalAction};
 use alloc::vec::Vec;
 use alloc::{
@@ -14,7 +12,10 @@ use alloc::{
 };
 use core::sync::atomic::AtomicI32;
 use hashbrown::HashMap;
+use helper::error::*;
 use kernel_hal::VirtAddr;
+use net_stack::net::Socket;
+// use crate::net::Socket;
 use rcore_fs::vfs::{FileSystem, INode};
 use smoltcp::socket::SocketHandle;
 // use smoltcp::socket::SocketSet;

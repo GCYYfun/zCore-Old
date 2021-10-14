@@ -8,8 +8,9 @@ description = "Linux kernel objects"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-loopback = ["net-stack"]
-e1000 = []
+default = ["net-stack"]
+loopback = ["net-stack/loopback"]
+e1000 = ["net-stack/e1000"]
 
 [dependencies]
 async-trait = "0.1"
@@ -34,3 +35,4 @@ futures = { version = "0.3.5", default-features = false, features = [ "async-awa
 # net-stack = {git = "https://gitee.com/gcyyfun/net-stack",rev = "d16b28e" , optional = true}
 net-stack = {path = "/home/own/RoadMap/net-stack", optional = true}
 # smoltcp = { path = "/home/own/comp/smoltcp", default-features = false, features = ["alloc","log", "async", "medium-ethernet","proto-ipv4", "proto-igmp", "socket-icmp", "socket-udp", "socket-tcp", "socket-raw"] }
+helper = {path = "/home/own/RoadMap/helper"}

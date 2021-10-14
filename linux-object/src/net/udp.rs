@@ -1,8 +1,8 @@
 // udpsocket
 #![allow(dead_code)]
 // crate
-use crate::error::LxError;
-use crate::error::LxResult;
+use helper::error::LxError;
+use helper::error::LxResult;
 use crate::net::from_cstr;
 use crate::net::get_ephemeral_port;
 use crate::net::get_net_driver;
@@ -43,13 +43,16 @@ use smoltcp::socket::UdpSocketBuffer;
 use async_trait::async_trait;
 
 // third part
+#[allow(unused_imports)]
 use zircon_object::impl_kobject;
+#[allow(unused_imports)]
 use zircon_object::object::*;
 
 /// missing documentation
+#[derive(Debug)]
 pub struct UdpSocketState {
     /// missing documentation
-    base: KObjectBase,
+    // base: KObjectBase,
     /// missing documentation
     handle: GlobalSocketHandle,
     /// missing documentation
@@ -77,7 +80,7 @@ impl UdpSocketState {
         let handle = GlobalSocketHandle(get_net_sockets().lock().add(socket));
 
         UdpSocketState {
-            base: KObjectBase::new(),
+            // base: KObjectBase::new(),
             handle,
             remote_endpoint: None,
         }
@@ -319,7 +322,7 @@ impl UdpSocketState {
         res
     }
 }
-impl_kobject!(UdpSocketState);
+// impl_kobject!(UdpSocketState);
 
 /// missing in implementation
 #[async_trait]

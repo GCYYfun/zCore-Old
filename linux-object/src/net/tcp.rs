@@ -1,8 +1,8 @@
 // Tcpsocket
 #![allow(dead_code)]
 // crate
-use crate::error::LxError;
-use crate::error::LxResult;
+use helper::error::LxError;
+use helper::error::LxResult;
 use crate::net::get_ephemeral_port;
 use crate::net::get_net_sockets;
 #[allow(unused_imports)]
@@ -33,6 +33,7 @@ use smoltcp::socket::TcpSocketBuffer;
 use async_trait::async_trait;
 
 // third part
+#[allow(unused_imports)]
 use zircon_object::object::*;
 
 // future
@@ -42,9 +43,10 @@ use zircon_object::object::*;
 // use core::task::Poll;
 
 /// missing documentation
+#[derive(Debug)]
 pub struct TcpSocketState {
     /// missing documentation
-    base: KObjectBase,
+    // base: KObjectBase,
     /// missing documentation
     handle: GlobalSocketHandle,
     /// missing documentation
@@ -68,7 +70,7 @@ impl TcpSocketState {
         let handle = GlobalSocketHandle(get_net_sockets().lock().add(socket));
 
         TcpSocketState {
-            base: KObjectBase::new(),
+            // base: KObjectBase::new(),
             handle,
             local_endpoint: None,
             is_listening: false,
@@ -528,7 +530,7 @@ impl TcpSocketState {
                     let new_handle = GlobalSocketHandle(sockets.add(socket));
                     let old_handle = ::core::mem::replace(&mut self.handle, new_handle);
                     Arc::new(Mutex::new(TcpSocketState {
-                        base: KObjectBase::new(),
+                        // base: KObjectBase::new(),
                         handle: old_handle,
                         local_endpoint: self.local_endpoint,
                         is_listening: false,
@@ -586,7 +588,7 @@ impl TcpSocketState {
             let new_handle = GlobalSocketHandle(sockets.add(socket));
             let old_handle = ::core::mem::replace(&mut self.handle, new_handle);
             Arc::new(Mutex::new(TcpSocketState {
-                base: KObjectBase::new(),
+                // base: KObjectBase::new(),
                 handle: old_handle,
                 local_endpoint: self.local_endpoint,
                 is_listening: false,
@@ -637,7 +639,7 @@ impl TcpSocketState {
         res
     }
 }
-impl_kobject!(TcpSocketState);
+// impl_kobject!(TcpSocketState);
 
 #[async_trait]
 impl Socket for TcpSocketState {

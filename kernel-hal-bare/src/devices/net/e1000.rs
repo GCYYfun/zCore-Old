@@ -98,7 +98,7 @@ impl NetDriver for E1000Interface {
         }
 
         let data = self.driver.0.lock().handle_interrupt();
-        // warn!("{}",data);
+        warn!("data : {}", data);
         if data {
             let timestamp = Instant::from_millis(timer_now().as_millis() as i64);
             let mut sockets = socketset.lock();
@@ -234,6 +234,25 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
 
     let driver = Arc::new(e1000_iface);
     NET_DRIVERS.write().push(driver);
+
+    // use net_stack::NET_STACK;
+    // use net_stack::{Stack,StackInner};
+    // // use net_stack::NET_STACK;
+    // // 创建 一个 栈
+    // let stack_inner = StackInner { interface: iface };
+    // // stack_inner.interfaces.insert(0, iface);
+
+    // // 把 栈 返回
+
+    // let mut stack = Stack {
+    //     inner: Arc::new(Mutex::new(stack_inner)),
+    // };
+
+    // // let info = InterfaceInfo::new(String::from("smoltcp"));
+    // let mut w = NET_STACK.write();
+
+    // w.lock().insert(1, Arc::new(stack));
+
     // use crate::arch::interrupt::register_irq_handler;
     // register_irq_handler(57,Box::new(net_interrupt_test));
     use crate::arch::interrupt::IRQ_TABLE;
@@ -242,10 +261,13 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
         .insert(57, Some(Box::new(net_interrupt_test)));
 }
 
+use net_stack::resource::get_net_sockets;
+
 fn net_interrupt_test() {
+    warn!("interrupt");
     for iface in NET_DRIVERS.read().clone().iter() {
         warn!("erver iface net_interrupt iface : {:?}", iface.get_ifname());
-        iface.try_handle_interrupt(Some(25), &(*SOCKETS));
+        iface.try_handle_interrupt(Some(25), &get_net_sockets());
     }
 }
 

@@ -10,8 +10,8 @@ description = "Kernel HAL implementation for bare metal environment."
 [features]
 board_qemu = []
 board_d1 = []
-e1000 = []
-loopback = []
+loopback = ["net-stack/loopback"]
+e1000 = ["net-stack/e1000"]
 
 [dependencies]
 log = "0.4"
@@ -26,6 +26,8 @@ rcore-fs = { git = "https://github.com/rcore-os/rcore-fs", rev = "6df6cd2" }
 device_tree = { git = "https://github.com/rcore-os/device_tree-rs" }
 virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers", rev = "568276" }
 
+net-stack = {path = "/home/own/RoadMap/net-stack"}
+helper = {path = "/home/own/RoadMap/helper"}
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86_64 = "0.14"

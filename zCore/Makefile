@@ -82,7 +82,7 @@ baremetal-test-qemu_opts += \
 	-serial mon:stdio \
 	-m 4G \
 	-netdev type=user,id=net0,hostfwd=udp::6969-:6969,hostfwd=tcp::9999-:9999 \
-	-device e1000e,netdev=net0 \
+	-device e1000e,netdev=net0,mac=52:54:00:12:34:56 \
 	-device isa-debug-exit,iobase=0xf4,iosize=0x04
 
 else ifeq ($(arch), riscv64)
@@ -153,8 +153,8 @@ $(kernel_img): $(kernel_bin)
 
 ifeq ($(board), d1)
 run-thead: build
-	@cp ../prebuilt/firmware/fw_jump-0x40020000.bin fw-zCore.bin
-	@dd if=$(kernel_bin) of=fw-zCore.bin bs=1 seek=131072
+	cp ../prebuilt/firmware/fw_jump-0x40020000.bin fw-zCore.bin
+	dd if=$(kernel_bin) of=fw-zCore.bin bs=1 seek=131072
 	xfel ddr ddr3
 	xfel write 0x40000000 fw-zCore.bin
 	xfel exec 0x40000000

@@ -1,11 +1,20 @@
 use super::*;
-use linux_object::net::sockaddr_to_endpoint;
-use linux_object::net::IcmpSocketState;
-use linux_object::net::RawSocketState;
-use linux_object::net::SockAddr;
-use linux_object::net::Socket;
-use linux_object::net::TcpSocketState;
-use linux_object::net::UdpSocketState;
+use net_stack::net::sockaddr_to_endpoint;
+// use net_stack::net::IcmpSocketState;
+// use net_stack::net::RawSocketState;
+use net_stack::net::SockAddr;
+use net_stack::net::Socket;
+use net_stack::net::TcpSocketState;
+use net_stack::net::UdpSocketState;
+
+// use linux_object::net::sockaddr_to_endpoint;
+// // use net_stack::net::IcmpSocketState;
+// // use net_stack::net::RawSocketState;
+// use linux_object::net::SockAddr;
+// use linux_object::net::Socket;
+// use linux_object::net::TcpSocketState;
+// use linux_object::net::UdpSocketState;
+
 use spin::Mutex;
 
 impl Syscall<'_> {
@@ -34,8 +43,11 @@ impl Syscall<'_> {
                 1 => Arc::new(Mutex::new(TcpSocketState::new())),
                 2 => Arc::new(Mutex::new(UdpSocketState::new())),
                 3 => match protocol {
-                    1 => Arc::new(Mutex::new(IcmpSocketState::new())),
-                    _ => Arc::new(Mutex::new(RawSocketState::new(protocol as u8))),
+                    1 => Arc::new(Mutex::new(UdpSocketState::new())),
+                    _ => {
+                        // Arc::new(Mutex::new(UdpSocketState::new(protocol as u8)))
+                        Arc::new(Mutex::new(UdpSocketState::new()))
+                    }
                 },
                 _ => return Err(LxError::EINVAL),
             },
@@ -53,7 +65,7 @@ impl Syscall<'_> {
         addr: UserInPtr<SockAddr>,
         addr_len: usize,
     ) -> SysResult {
-        info!(
+        warn!(
             "sys_connect: fd: {}, addr: {:?}, addr_len: {}",
             fd, addr, addr_len
         );

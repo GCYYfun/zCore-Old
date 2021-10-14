@@ -6,8 +6,8 @@ use crate::fs::FileLikeType;
 use alloc::{boxed::Box, string::String, sync::Arc};
 
 use super::FileLike;
-use crate::error::{LxError, LxResult};
 use async_trait::async_trait;
+use helper::error::{LxError, LxResult};
 use rcore_fs::vfs::{FsError, INode, Metadata, PollStatus};
 use spin::Mutex;
 use zircon_object::object::*;

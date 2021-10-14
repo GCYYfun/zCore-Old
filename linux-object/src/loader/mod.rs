@@ -2,12 +2,13 @@
 #![deny(missing_docs)]
 
 use {
-    crate::error::LxResult,
     crate::fs::INodeExt,
     alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec},
+    helper::error::LxResult,
+    helper::error::ZxError,
     rcore_fs::vfs::INode,
     xmas_elf::{program::ProgramHeader, ElfFile},
-    zircon_object::{util::elf_loader::*, vm::*, ZxError},
+    zircon_object::{util::elf_loader::*, vm::*},
 };
 
 mod abi;

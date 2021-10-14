@@ -1,6 +1,7 @@
 //! ELF loading of Zircon and Linux.
-use crate::{error::*, vm::*};
+use crate::vm::*;
 use alloc::sync::Arc;
+use helper::error::*;
 use xmas_elf::{
     program::{Flags, ProgramHeader, SegmentData, Type},
     sections::SectionData,

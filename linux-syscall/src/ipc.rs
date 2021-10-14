@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 
 use bitflags::*;
-use kernel_hal::user::*;
+use helper::user::*;
 pub use linux_object::ipc::*;
 use numeric_enum_macro::numeric_enum;
 use zircon_object::vm::*;
